@@ -18,6 +18,8 @@ public class PropertiesUtil {
         String fileName = "mmall.properties";
         props = new Properties();
         try {
+            //读取配置文件
+            //PropertiesUtil.class.getClassLoader().getResourceAsStream(fileName)获取文件位置
             props.load(new InputStreamReader(PropertiesUtil.class.getClassLoader().getResourceAsStream(fileName), "UTF-8"));
         } catch (IOException e) {
             logger.error("配置文件读取异常", e);
