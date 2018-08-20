@@ -83,7 +83,7 @@ public class CategoryManageController {
 
     @RequestMapping(value = "get_children_category.do", method = RequestMethod.POST)
     @ResponseBody
-    public ServerResponse<List<Category>> selectCategoryAndDeepChildrenById(HttpSession session, @RequestParam(value = "categoryId", defaultValue = "0") Integer categoryId) {
+    public ServerResponse<List<Integer>> selectCategoryAndDeepChildrenById(HttpSession session, @RequestParam(value = "categoryId", defaultValue = "0") Integer categoryId) {
         User user = (User) session.getAttribute(Const.CURRENT_USER);
         if (user == null) {
             return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "用户未登录，请先登录");
