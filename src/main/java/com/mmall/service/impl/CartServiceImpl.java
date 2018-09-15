@@ -1,6 +1,7 @@
 package com.mmall.service.impl;
 
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.mmall.common.Const;
 import com.mmall.common.ResponseCode;
@@ -30,7 +31,7 @@ public class CartServiceImpl implements ICartService {
     private ProductMapper productMapper;
 
     public ServerResponse<CartVo> add(Integer userId, Integer productId, Integer count) {
-        if (productId == null || count == null) {
+        if (!(productId != null && count != null)) {
             return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
         }
         Cart cart = cartMapper.selectByUserIdAndProductId(userId, productId);
@@ -41,29 +42,66 @@ public class CartServiceImpl implements ICartService {
             cartItem.setChecked(Const.Cart.CHECKED);
             cartItem.setUserId(userId);
             cartItem.setProductId(productId);
-            cartMapper.insert(cartItem);
-//            if (rowCount > 0) {
-//                return ServerResponse.createBySuccessMessage("商品添加购物车成功");
-//            }
-//            return ServerResponse.createBySuccessMessage("商品添加失败");
+            int rowCount = cartMapper.insert(cartItem);
+            if (rowCount == 0 || rowCount < 0) return ServerResponse.createBySuccessMessage("insert商品添加失败");
 
         } else {
             //表示这个商品已经在购物车中
             //将商品的数量加上count进行更新即可
             count = cart.getQuantity() + count;
             cart.setQuantity(count);
-            cartMapper.updateByPrimaryKeySelective(cart);
-//            if (rowCount > 0) {
-//                return ServerResponse.createBySuccessMessage("更新商品数量成功");
-//            }
-//            return ServerResponse.createBySuccessMessage("商品添加失败");
+            int rowCount = cartMapper.updateByPrimaryKeySelective(cart);
+            if (rowCount == 0 || rowCount < 0) return ServerResponse.createBySuccessMessage("update商品添加失败");
+
         }
         CartVo cartVo = this.getCartVoLimit(userId);
         return ServerResponse.createBySuccess(cartVo);
     }
 
+    public ServerResponse<CartVo> update(Integer userId, Integer productId, Integer count) {
+        //参数校验
+        if (!(productId != null && count != null)) {
+            return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
+        }
+        Cart cart = cartMapper.selectByUserIdAndProductId(userId, productId);
+        if (cart != null) {
+            cart.setQuantity(count);
+        }
+        cartMapper.updateByPrimaryKeySelective(cart);
+        return this.list(userId);
+    }
 
-    //超级核心方法
+
+    public ServerResponse<CartVo> deleteProduct(Integer userId, String productIds) {
+        //调用google guava类库封装的split方法直接将字符串类型("123","345","567")->collection 类型
+        List<String> productIdList = Splitter.on(",").splitToList(productIds);
+        if (CollectionUtils.isEmpty(productIdList)) {
+            return ServerResponse.createByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
+        }
+        cartMapper.deleteByUserIdAndProductIds(userId, productIdList);
+        return this.list(userId);
+    }
+
+    public ServerResponse<CartVo> list(Integer userId) {
+        CartVo cartVo = this.getCartVoLimit(userId);
+        return ServerResponse.createBySuccess(cartVo);
+    }
+
+
+    public ServerResponse<CartVo> checkedOrUncheckedProduct(Integer userId, Integer productId, Integer checked) {
+        cartMapper.checkedOrUncheckedAllProduct(userId, productId, checked);
+        return this.list(userId);
+    }
+
+    public ServerResponse<Integer> getCartProductCount(Integer userId) {
+        if (userId == null) {
+            return ServerResponse.createBySuccess(0);
+        }
+        int count = cartMapper.selectCartProductCount(userId);
+        return ServerResponse.createBySuccess(count);
+    }
+
+    //购物车封装的核心方法
     private CartVo getCartVoLimit(Integer userId) {
         CartVo cartVo = new CartVo();
         List<Cart> cartList = cartMapper.selectCartByUserId(userId);
@@ -99,7 +137,7 @@ public class CartServiceImpl implements ICartService {
                     }
                     cartProductVo.setQuantity(buyLimitCount);
                     //计算产品总价
-                    cartProductVo.setProductTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartProductVo.getQuantity().doubleValue()));
+                    cartProductVo.setProductTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartProductVo.getQuantity()));
                     cartProductVo.setProductChecked(cartItem.getChecked());
                 }
                 if (cartItem.getChecked() == Const.Cart.CHECKED) {
@@ -116,12 +154,12 @@ public class CartServiceImpl implements ICartService {
         return cartVo;
     }
 
+
+    //判断是否是全选
     private boolean getProductCheckedAll(Integer userId) {
         if (userId == null) {
             return false;
         }
         return cartMapper.selectProductCheckedAllStatusByUserId(userId) == 0;
     }
-
-
 }
