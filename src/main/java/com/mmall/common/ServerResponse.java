@@ -39,7 +39,6 @@ public class ServerResponse<T> implements Serializable {
     }
 
     @JsonIgnore
-//    使之不在序列化结果之中
     public boolean isSuccess() {
         return this.status == ResponseCode.SUCCESS.getCode();
     }
