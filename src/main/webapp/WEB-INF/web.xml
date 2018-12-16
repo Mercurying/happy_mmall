@@ -45,7 +45,7 @@
     </servlet>
 
 
-
+    <!--注意并不是拦截所有请求 仅拦截*.do接口请求-->
     <servlet-mapping>
         <servlet-name>dispatcher</servlet-name>
         <url-pattern>*.do</url-pattern>
