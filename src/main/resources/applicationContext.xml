@@ -12,6 +12,7 @@
     <context:component-scan base-package="com.mmall" annotation-config="true"/>
 
     <!--<context:annotation-config/>-->
+    <!--启动@AspectJ自动代理支持-->
     <aop:aspectj-autoproxy/>
 
 
