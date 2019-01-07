@@ -136,7 +136,7 @@ public class ProductManageController {
     }
 
 
-    //       simDitor编辑器上传图片返回响应格式
+         // simDitor编辑器上传图片返回响应格式
 //        {
 //            "success": true/false,
 //                "msg": "error message", # optional
